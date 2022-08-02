@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstring>
 #include <iomanip>
+#include <fcntl.h>
 #include <omp.h>
 #include <pq_flash_index.h>
 #include <set>
@@ -203,10 +204,13 @@ int search_disk_index(
   for (auto& stats : stats_Lvec) {
     stats = new diskann::QueryStats[query_num];
   }
-  unsigned offset = 0;
+  uint64_t offset = 0;
   for (unsigned i = 0; i < disk_segments.size(); i++) {
     diskann::cout << "searching on segment " << i << std::endl;
     auto disk_segment = disk_segments[i];
+    int fd = open(disk_segment.c_str(), O_RDONLY|O_DIRECT);
+    pread(fd,(void*)&offset, sizeof(uint64_t), 11*sizeof(uint64_t));
+    close(fd);
     search_disk_segment(metric, disk_segment, query, query_num,
                         query_aligned_dim, num_threads, recall_at, beamwidth,
                         num_nodes_to_cache, Lvec, query_ids, query_dis,
@@ -214,8 +218,8 @@ int search_disk_index(
     diskann::cout << "search done on segment " << i << std::endl;
     if (i == 0) {
       for (unsigned j = 0; j < Lvec.size(); j++) {
-        res_ids.resize(recall_at*query_num);
-        res_dis.resize(recall_at*query_num);
+        res_ids[j].resize(recall_at*query_num);
+        res_dis[j].resize(recall_at*query_num);
         res_ids[j].swap(query_ids[j]);
         res_dis[j].swap(query_dis[j]);
       }
@@ -225,11 +229,6 @@ int search_disk_index(
                   query_num, offset);
       }
     }
-    uint64_t      npts;
-    std::ifstream reader(disk_segment);
-    reader.read((char*) &npts, sizeof(uint64_t));
-    reader.close();
-    offset += npts;
   }
 
   for (uint32_t test_id = 0; test_id < Lvec.size(); test_id++) {
