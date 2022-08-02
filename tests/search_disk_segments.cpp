@@ -208,8 +208,8 @@ int search_disk_index(
   for (unsigned i = 0; i < disk_segments.size(); i++) {
     diskann::cout << "searching on segment " << i << std::endl;
     auto disk_segment = disk_segments[i];
-    int fd = open(disk_segment.c_str(), O_RDONLY|O_DIRECT);
-    pread(fd,(void*)&offset, sizeof(uint64_t), 11*sizeof(uint64_t));
+    int  fd = open(disk_segment.c_str(), O_RDONLY | O_DIRECT);
+    pread(fd, (void*) &offset, sizeof(uint64_t), 11 * sizeof(uint64_t));
     close(fd);
     search_disk_segment(metric, disk_segment, query, query_num,
                         query_aligned_dim, num_threads, recall_at, beamwidth,
@@ -218,10 +218,12 @@ int search_disk_index(
     diskann::cout << "search done on segment " << i << std::endl;
     if (i == 0) {
       for (unsigned j = 0; j < Lvec.size(); j++) {
-        res_ids[j].resize(recall_at*query_num);
-        res_dis[j].resize(recall_at*query_num);
-        res_ids[j].swap(query_ids[j]);
-        res_dis[j].swap(query_dis[j]);
+        res_ids[j].resize(recall_at * query_num);
+        res_dis[j].resize(recall_at * query_num);
+        for (unsigned k = 0; k < recall_at * query_num; k++) {
+          res_ids[j][k] = offset + query_ids[j][k];
+          res_dis[j][k] = query_dis[j][k];
+        }
       }
     } else {
       for (unsigned j = 0; j < Lvec.size(); j++) {
