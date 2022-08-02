@@ -81,7 +81,7 @@ int search_disk_index(diskann::Metric&   metric,
     //    groundtruth_ids, gt_num); // use for traditional truthset
     if (gt_num != query_num) {
       diskann::cout
-          << "Error. Mismatch in number of queries and ground truth data"
+          << "Error. Mismatch in number of queries and ground truth data" <<gt_num<<" "<<query_num
           << std::endl;
       return -1;
     }

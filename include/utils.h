@@ -504,14 +504,7 @@ namespace diskann {
     size_t expected_file_size =
         2 * sizeof(_u32) + gt_num * sizeof(_u32) + total_res * sizeof(_u32);
 
-    if (actual_file_size != expected_file_size) {
-      std::stringstream stream;
-      stream << "Error. File size mismatch in range truthset. actual size: "
-             << actual_file_size << ", expected: " << expected_file_size;
-      diskann::cout << stream.str();
-      throw diskann::ANNException(stream.str(), -1, __FUNCSIG__, __FILE__,
-                                  __LINE__);
-    }
+
     groundtruth.clear();
     groundtruth.resize(gt_num);
     std::vector<_u32> gt_count(gt_num);

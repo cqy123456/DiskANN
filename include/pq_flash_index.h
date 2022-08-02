@@ -68,6 +68,8 @@ namespace diskann {
         diskann::Metric                     metric = diskann::Metric::L2);
     DISKANN_DLLEXPORT ~PQFlashIndex();
 
+    uint64_t GetDataPrefixSum() {return prefix_sum;}
+
 #ifdef EXEC_ENV_OLS
     DISKANN_DLLEXPORT int load(diskann::MemoryMappedFiles &files,
                                uint32_t num_threads, const char *index_prefix);
@@ -140,6 +142,7 @@ namespace diskann {
                              // PQ for disk data (very large dimensionality)
     _u64 aligned_dim = 0;
     _u64 disk_bytes_per_point = 0;
+    _u64 prefix_sum = 0;
 
     std::string                        disk_index_file;
     std::vector<std::pair<_u32, _u32>> node_visit_counter;
