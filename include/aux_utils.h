@@ -119,6 +119,8 @@ namespace diskann {
   DISKANN_DLLEXPORT void create_disk_layout(const std::string base_file,
                                             const std::string mem_index_file,
                                             const std::string output_file,
-                                            const std::string reorder_data_file = std::string(""));
+                                            const uint64_t prefix_sum = 0,
+                                            const std::string reorder_data_file = std::string("")
+                                            );
 
 }  // namespace diskann

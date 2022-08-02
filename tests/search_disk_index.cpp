@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "utils.h"
 #include "percentile_stats.h"
+#include "evaluate.h"
 
 #ifndef _WINDOWS
 #include <sys/mman.h>
@@ -101,7 +102,7 @@ int search_disk_index(
       new diskann::PQFlashIndex<T>(reader, metric));
 
   int res = _pFlashIndex->load(num_threads, index_path_prefix.c_str());
-
+  uint64_t load_mem = getCurrentRSS(); 
   if (res != 0) {
     return res;
   }
@@ -167,7 +168,7 @@ int search_disk_index(
                 << std::setw(16) << "99.9 Latency" << std::setw(16)
                 << "Mean IOs" << std::setw(16) << "CPU (s)";
   if (calc_recall_flag) {
-    diskann::cout << std::setw(16) << recall_string << std::endl;
+    diskann::cout << std::setw(16) << recall_string << std::setw(16)<<"RSS of loading index       peak mem"<< std::endl;
   } else
     diskann::cout << std::endl;
   diskann::cout
@@ -216,6 +217,7 @@ int search_disk_index(
     auto                          e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = e - s;
     float qps = (1.0 * query_num) / (1.0 * diff.count());
+    uint64_t peak_mem = getPeakRSS();
 
     diskann::convert_types<uint64_t, uint32_t>(query_result_ids_64.data(),
                                                query_result_ids[test_id].data(),
@@ -249,7 +251,7 @@ int search_disk_index(
                   << std::setw(16) << latency_999 << std::setw(16) << mean_ios
                   << std::setw(16) << mean_cpuus;
     if (calc_recall_flag) {
-      diskann::cout << std::setw(16) << recall << std::endl;
+      diskann::cout << std::setw(16) << recall <<  std::setw(16) << load_mem<<  std::setw(16) << peak_mem<<std::endl;
     } else
       diskann::cout << std::endl;
     delete[] stats;
@@ -394,3 +396,4 @@ int main(int argc, char** argv) {
     return -1;
   }
 }
+

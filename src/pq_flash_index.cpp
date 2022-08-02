@@ -702,12 +702,17 @@ namespace diskann {
       READ_U64(index_metadata, this->reorder_data_start_sector);
       READ_U64(index_metadata, this->ndims_reorder_vecs);
       READ_U64(index_metadata, this->nvecs_per_sector);
+    } else {
+      READ_U64(index_metadata, this->prefix_sum);
+      READ_U64(index_metadata, this->prefix_sum);
+      READ_U64(index_metadata, this->prefix_sum);
     }
-
+    READ_U64(index_metadata, this->prefix_sum);
     diskann::cout << "Disk-Index File Meta-data: ";
     diskann::cout << "# nodes per sector: " << nnodes_per_sector;
     diskann::cout << ", max node len (bytes): " << max_node_len;
-    diskann::cout << ", max node degree: " << max_degree << std::endl;
+    diskann::cout << ", max node degree: " << max_degree ;
+    diskann::cout << ", prefix sum: "<< this->prefix_sum << std::endl;
 
 #ifdef EXEC_ENV_OLS
     delete[] bytes;
@@ -838,7 +843,7 @@ namespace diskann {
     const T *    query = data.scratch.aligned_query_T;
     const float *query_float = data.scratch.aligned_query_float;
 
-    for (uint32_t i = 0; i < this->data_dim; i++) {
+    for (uint32_t i = 0; i < this->data_dim -1 ; i++) {
       data.scratch.aligned_query_float[i] = query1[i];
       data.scratch.aligned_query_T[i] = query1[i];
       query_norm += query1[i] * query1[i];

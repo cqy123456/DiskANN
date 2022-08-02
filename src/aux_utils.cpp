@@ -702,7 +702,9 @@ namespace diskann {
   void create_disk_layout(const std::string base_file,
                           const std::string mem_index_file,
                           const std::string output_file,
-                          const std::string reorder_data_file) {
+                          const uint64_t prefix_sum,
+                          const std::string reorder_data_file
+                          ) {
     unsigned npts, ndims;
 
     // amount to read or write in one shot
@@ -787,6 +789,7 @@ namespace diskann {
     diskann::cout << "max_node_len: " << max_node_len << "B" << std::endl;
     diskann::cout << "nnodes_per_sector: " << nnodes_per_sector << "B"
                   << std::endl;
+    diskann::cout << "prefix_sum: " << prefix_sum << std::endl;
 
     // SECTOR_LEN buffer for each sector
     std::unique_ptr<char[]> sector_buf = std::make_unique<char[]>(SECTOR_LEN);
@@ -825,6 +828,8 @@ namespace diskann {
       *(_u64 *) (sector_buf.get() + 10 * sizeof(_u64)) =
           n_data_nodes_per_sector;
     }
+    *(_u64 *) (sector_buf.get() + 11 * sizeof(_u64)) = prefix_sum;
+
 
     diskann_writer.write(sector_buf.get(), SECTOR_LEN);
 
@@ -923,7 +928,7 @@ namespace diskann {
       param_list.push_back(cur_param);
     }
     if (param_list.size() != 5 && param_list.size() != 6 &&
-        param_list.size() != 7) {
+        param_list.size() != 7 &&  param_list.size() != 8) {
       diskann::cout
           << "Correct usage of parameters is R (max degree) "
              "L (indexing list size, better if >= R)"
@@ -953,7 +958,7 @@ namespace diskann {
     // if there is a 6th parameter, it means we compress the disk index
     // vectors also using PQ data (for very large dimensionality data). If the
     // provided parameter is 0, it means we store full vectors.
-    if (param_list.size() == 6 || param_list.size() == 7) {
+    if (param_list.size() == 6 || param_list.size() == 7 || param_list.size() == 8) {
       disk_pq_dims = atoi(param_list[5].c_str());
       use_disk_pq = true;
       if (disk_pq_dims == 0)
@@ -961,7 +966,7 @@ namespace diskann {
     }
 
     bool reorder_data = false;
-    if (param_list.size() == 7) {
+    if (param_list.size() == 7 || param_list.size() == 8) {
       if (1 == atoi(param_list[6].c_str())) {
         reorder_data = true;
       }
@@ -1024,11 +1029,12 @@ namespace diskann {
       omp_set_num_threads(num_threads);
       mkl_set_num_threads(num_threads);
     }
-
+    uint64_t prefix_sum = atoi(param_list[7].c_str());
     diskann::cout << "Starting index build: R=" << R << " L=" << L
                   << " Query RAM budget: " << final_index_ram_limit
                   << " Indexing ram budget: " << indexing_ram_budget
-                  << " T: " << num_threads << std::endl;
+                  << " T: " << num_threads 
+                  <<"prefix sum: "<<prefix_sum<<std::endl;
 
     auto s = std::chrono::high_resolution_clock::now();
 
@@ -1081,7 +1087,8 @@ namespace diskann {
     bool make_zero_mean = true;
     if (compareMetric == diskann::Metric::INNER_PRODUCT)
       make_zero_mean = false;
-
+    
+    auto pq_begin = std::chrono::high_resolution_clock::now();
     generate_pq_pivots(train_data, train_size, (uint32_t) dim, 256,
                        (uint32_t) num_pq_chunks, NUM_KMEANS_REPS,
                        pq_pivots_path, make_zero_mean);
@@ -1089,7 +1096,9 @@ namespace diskann {
     generate_pq_data_from_pivots<T>(data_file_to_use.c_str(), 256,
                                     (uint32_t) num_pq_chunks, pq_pivots_path,
                                     pq_compressed_vectors_path);
-
+    auto pq_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> pq_diff = pq_end - pq_begin;
+    diskann::cout<<"Building PQ code cost :"<<(1.0f * (float) pq_diff.count())<<std::endl;
     delete[] train_data;
 
     train_data = nullptr;
@@ -1105,15 +1114,15 @@ namespace diskann {
 
     if (!use_disk_pq) {
       diskann::create_disk_layout<T>(data_file_to_use.c_str(), mem_index_path,
-                                     disk_index_path);
+                                     disk_index_path,  prefix_sum);
     } else {
       if (!reorder_data)
         diskann::create_disk_layout<_u8>(disk_pq_compressed_vectors_path,
-                                         mem_index_path, disk_index_path);
+                                         mem_index_path, disk_index_path, prefix_sum);
       else
         diskann::create_disk_layout<_u8>(disk_pq_compressed_vectors_path,
                                          mem_index_path, disk_index_path,
-                                         data_file_to_use.c_str());
+                                         prefix_sum, data_file_to_use.c_str());
     }
 
     double ten_percent_points = std::ceil(points_num * 0.1);
@@ -1137,13 +1146,13 @@ namespace diskann {
 
   template DISKANN_DLLEXPORT void create_disk_layout<int8_t>(
       const std::string base_file, const std::string mem_index_file,
-      const std::string output_file, const std::string reorder_data_file);
+      const std::string output_file, const uint64_t prefix_sum, const std::string reorder_data_file);
   template DISKANN_DLLEXPORT void create_disk_layout<uint8_t>(
       const std::string base_file, const std::string mem_index_file,
-      const std::string output_file, const std::string reorder_data_file);
+      const std::string output_file, const uint64_t prefix_sum, const std::string reorder_data_file);
   template DISKANN_DLLEXPORT void create_disk_layout<float>(
       const std::string base_file, const std::string mem_index_file,
-      const std::string output_file, const std::string reorder_data_file);
+      const std::string output_file, const uint64_t prefix_sum, const std::string reorder_data_file);
 
   template DISKANN_DLLEXPORT int8_t *load_warmup<int8_t>(
       const std::string &cache_warmup_file, uint64_t &warmup_num,
