@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   unsigned    num_threads, R, L, disk_PQ;
   float       B, M, S;
   bool        append_reorder_data = false;
-
+  unsigned   Com;
   po::options_description desc{"Arguments"};
   try {
     desc.add_options()("help,h", "Print information on arguments");
@@ -61,7 +61,8 @@ int main(int argc, char** argv) {
 
     desc.add_options()("segment_size", po::value<float>(&S)->required(),
                         "Split raw data into some fixed segment size files.");
-
+    desc.add_options()("compressed_level,E", po::value<unsigned>(&Com)->default_value(0),
+                       "compressed level for data pq");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     if (vm.count("help")) {
@@ -116,7 +117,7 @@ int main(int argc, char** argv) {
   uint64_t prefix_sum = 0;
   diskann::cout<<"Begin split data and build segment index, total index number: "<<file_chunk_num<<std::endl;
   
-  for (int i = 0; i < file_chunk_num; i++) {
+  for (unsigned i = 0; i < file_chunk_num; i++) {
     splite_fname_stream.str("");
     splite_fname_stream<<data_path<<"_part"<<i;
     std::string split_fname =  splite_fname_stream.str();
@@ -138,7 +139,8 @@ int main(int argc, char** argv) {
                       std::string(std::to_string(num_threads)) + " " +
                       std::string(std::to_string(disk_PQ)) + " " +
                       std::string(std::to_string(append_reorder_data)) + " " +
-                      std::string(std::to_string(prefix_sum));
+                      std::string(std::to_string(prefix_sum))+ " "+
+                      std::string(std::to_string(Com));
     splite_fname_stream.str("");
     splite_fname_stream<<index_path_prefix<<"_part"<<i;                  
     std::string split_index_path_prefix = splite_fname_stream.str();
