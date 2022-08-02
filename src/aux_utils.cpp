@@ -928,7 +928,7 @@ namespace diskann {
       param_list.push_back(cur_param);
     }
     if (param_list.size() != 5 && param_list.size() != 6 &&
-        param_list.size() != 7 &&  param_list.size() != 8) {
+        param_list.size() != 7 &&  param_list.size() != 8 && param_list.size() != 9) {
       diskann::cout
           << "Correct usage of parameters is R (max degree) "
              "L (indexing list size, better if >= R)"
@@ -1030,6 +1030,7 @@ namespace diskann {
       mkl_set_num_threads(num_threads);
     }
     uint64_t prefix_sum = atoi(param_list[7].c_str());
+    unsigned Com = atoi(param_list[8].c_str());
     diskann::cout << "Starting index build: R=" << R << " L=" << L
                   << " Query RAM budget: " << final_index_ram_limit
                   << " Indexing ram budget: " << indexing_ram_budget
@@ -1045,6 +1046,10 @@ namespace diskann {
     size_t num_pq_chunks =
         (size_t)(std::floor)(_u64(final_index_ram_limit / points_num));
 
+    if(Com != 0){
+      diskann::cout << "Com Level: "<<Com << std::endl;
+      num_pq_chunks = (size_t)(std::floor)(_u64(sizeof(T) * dim / Com));
+    }
     num_pq_chunks = num_pq_chunks <= 0 ? 1 : num_pq_chunks;
     num_pq_chunks = num_pq_chunks > dim ? dim : num_pq_chunks;
     num_pq_chunks =
