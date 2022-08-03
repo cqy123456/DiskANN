@@ -20,5 +20,9 @@ target_link_libraries(range_search_disk_index ${PROJECT_NAME} ${DISKANN_ASYNC_LI
 
 add_executable(build_disk_index_split build_disk_index_split.cpp)
 target_link_libraries(build_disk_index_split ${PROJECT_NAME} ${DISKANN_ASYNC_LIB} ${DISKANN_TOOLS_TCMALLOC_LINK_OPTIONS} Boost::program_options)
+
 add_executable(search_disk_segments search_disk_segments.cpp)
 target_link_libraries(search_disk_segments ${PROJECT_NAME} ${DISKANN_ASYNC_LIB} ${DISKANN_TOOLS_TCMALLOC_LINK_OPTIONS} Boost::program_options)
+
+add_executable(build_disk_index_one_segment build_disk_index_one_segment.cpp)
+target_link_libraries(build_disk_index_one_segment ${PROJECT_NAME} ${DISKANN_ASYNC_LIB} ${DISKANN_TOOLS_TCMALLOC_LINK_OPTIONS} Boost::program_options)

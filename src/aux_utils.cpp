@@ -919,7 +919,7 @@ namespace diskann {
   template<typename T>
   int build_disk_index(const char *dataFilePath, const char *indexFilePath,
                         const char *    indexBuildParameters,
-                        diskann::Metric compareMetric) {
+                        diskann::Metric compareMetric,  bool OnlyPQ) {
     std::stringstream parser;
     parser << std::string(indexBuildParameters);
     std::string              cur_param;
@@ -1107,6 +1107,7 @@ namespace diskann {
     delete[] train_data;
 
     train_data = nullptr;
+    if (OnlyPQ) return 0;
 // Gopal. Splitting diskann_dll into separate DLLs for search and build.
 // This code should only be available in the "build" DLL.
 #if defined(RELEASE_UNUSED_TCMALLOC_MEMORY_AT_CHECKPOINTS) && defined(DISKANN_BUILD)
@@ -1199,13 +1200,13 @@ namespace diskann {
 
   template DISKANN_DLLEXPORT int build_disk_index<int8_t>(
       const char *dataFilePath, const char *indexFilePath,
-      const char *indexBuildParameters, diskann::Metric compareMetric);
+      const char *indexBuildParameters, diskann::Metric compareMetric, bool OnlyPQ);
   template DISKANN_DLLEXPORT int build_disk_index<uint8_t>(
       const char *dataFilePath, const char *indexFilePath,
-      const char *indexBuildParameters, diskann::Metric compareMetric);
+      const char *indexBuildParameters, diskann::Metric compareMetric, bool OnlyPQ);
   template DISKANN_DLLEXPORT int build_disk_index<float>(
       const char *dataFilePath, const char *indexFilePath,
-      const char *indexBuildParameters, diskann::Metric compareMetric);
+      const char *indexBuildParameters, diskann::Metric compareMetric, bool OnlyPQ);
 
   template DISKANN_DLLEXPORT int build_merged_vamana_index<int8_t>(
       std::string base_file, diskann::Metric compareMetric, unsigned L,
