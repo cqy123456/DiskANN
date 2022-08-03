@@ -18,7 +18,7 @@ for compressed_level in ${compressed_level_list[@]}
 do
     for S in ${S_LIST[@]}
     do
-        INDEX_NAME=SSNPP10M_R${R}_L${L}_COMPRESS${compressed_level}_M${M}_S${S}_one
+        INDEX_NAME=SSNPP10M_R${R}_L${L}_COMPRESS${compressed_level}_M${M}_S${S}_WITHOUTGRAPH${without_graph}_one
         mkdir ${INDEX_NAME}
 
         INDEX_PATH="${INDEX_NAME}/${INDEX_NAME}"
