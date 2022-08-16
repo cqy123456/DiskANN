@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -550,7 +551,7 @@ namespace diskann {
                                 unsigned R, double sampling_rate,
                                 double ram_budget, std::string mem_index_path,
                                 std::string medoids_file,
-                                std::string centroids_file) {
+                                std::string centroids_file, bool fast=false) {
     size_t base_num, base_dim;
     diskann::get_bin_metadata(base_file, base_num, base_dim);
 
@@ -568,6 +569,7 @@ namespace diskann {
       paras.Set<unsigned>("num_rnds", 2);
       paras.Set<bool>("saturate_graph", 1);
       paras.Set<std::string>("save_path", mem_index_path);
+      paras.Set<bool>("fast", fast);
 
       std::unique_ptr<diskann::Index<T>> _pvamanaIndex =
           std::unique_ptr<diskann::Index<T>>(new diskann::Index<T>(
@@ -923,7 +925,7 @@ namespace diskann {
       param_list.push_back(cur_param);
     }
     if (param_list.size() != 5 && param_list.size() != 6 &&
-        param_list.size() != 7) {
+        param_list.size() != 7 && param_list.size() != 8) {
       diskann::cout
           << "Correct usage of parameters is R (max degree) "
              "L (indexing list size, better if >= R)"
@@ -964,6 +966,13 @@ namespace diskann {
     if (param_list.size() == 7) {
       if (1 == atoi(param_list[6].c_str())) {
         reorder_data = true;
+      }
+    }
+
+    bool fast = false;
+    if (param_list.size() == 8){
+      if(1 == atoi(param_list[7].c_str())){
+        fast = true;
       }
     }
 
@@ -1101,7 +1110,7 @@ namespace diskann {
 
     diskann::build_merged_vamana_index<T>(
         data_file_to_use.c_str(), diskann::Metric::L2, L, R, p_val,
-        indexing_ram_budget, mem_index_path, medoids_path, centroids_path);
+        indexing_ram_budget, mem_index_path, medoids_path, centroids_path, fast);
 
     if (!use_disk_pq) {
       diskann::create_disk_layout<T>(data_file_to_use.c_str(), mem_index_path,
@@ -1197,15 +1206,15 @@ namespace diskann {
       std::string base_file, diskann::Metric compareMetric, unsigned L,
       unsigned R, double sampling_rate, double ram_budget,
       std::string mem_index_path, std::string medoids_path,
-      std::string centroids_file);
+      std::string centroids_file, bool fast=false);
   template DISKANN_DLLEXPORT int build_merged_vamana_index<float>(
       std::string base_file, diskann::Metric compareMetric, unsigned L,
       unsigned R, double sampling_rate, double ram_budget,
       std::string mem_index_path, std::string medoids_path,
-      std::string centroids_file);
+      std::string centroids_file, bool fast=false);
   template DISKANN_DLLEXPORT int build_merged_vamana_index<uint8_t>(
       std::string base_file, diskann::Metric compareMetric, unsigned L,
       unsigned R, double sampling_rate, double ram_budget,
       std::string mem_index_path, std::string medoids_path,
-      std::string centroids_file);
+      std::string centroids_file, bool fast=false);
 };  // namespace diskann

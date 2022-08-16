@@ -3,6 +3,7 @@
 
 #include <omp.h>
 #include <boost/program_options.hpp>
+#include <string>
 
 #include "aux_utils.h"
 #include "index.h"
@@ -17,6 +18,7 @@ int main(int argc, char** argv) {
   unsigned    num_threads, R, L, disk_PQ;
   float       B, M;
   bool        append_reorder_data = false;
+  bool        fast = false;
 
   po::options_description desc{"Arguments"};
   try {
@@ -56,6 +58,9 @@ int main(int argc, char** argv) {
                        po::bool_switch()->default_value(false),
                        "Include full precision data in the index. Use only in "
                        "conjuction with compressed data on SSD.");
+    desc.add_options()("fast,F",
+                       po::bool_switch()->default_value(false),
+                       "Use One Round Build.");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -66,6 +71,10 @@ int main(int argc, char** argv) {
     po::notify(vm);
     if (vm["append_reorder_data"].as<bool>())
       append_reorder_data = true;
+    if (vm["fast"].as<bool>()){
+      std::cout << "use fast build" << std::endl;
+      fast = true;
+    }
   } catch (const std::exception& ex) {
     std::cerr << ex.what() << '\n';
     return -1;
@@ -103,7 +112,8 @@ int main(int argc, char** argv) {
                        std::string(std::to_string(M)) + " " +
                        std::string(std::to_string(num_threads)) + " " +
                        std::string(std::to_string(disk_PQ)) + " " +
-                       std::string(std::to_string(append_reorder_data));
+                       std::string(std::to_string(append_reorder_data)) + " "+
+                       std::string(std::to_string(fast));
 
   try {
     if (data_type == std::string("int8"))
